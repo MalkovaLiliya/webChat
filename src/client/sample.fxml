@@ -4,7 +4,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 <?import java.net.URL?>
-<VBox fx:controller="sample.Controller"
+<VBox fx:controller="client.Controller"
       xmlns:fx="http://javafx.com/fxml">
     <TextArea fx:id="textAreaCenter" minHeight="400"/>
     <HBox fx:id="hBox">
