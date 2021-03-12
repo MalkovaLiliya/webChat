@@ -1,18 +1,14 @@
 package server;
-import javax.xml.crypto.Data;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
+
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Date;
 import java.util.List;
-import java.util.Scanner;
 import java.util.Vector;
 
-public class Server {
-    List<ClientHandler>clients;
+public class Server{
+    List<ClientHandler> clients;
+    private AuthService authService;
 
     private static int PORT = 8189;
     ServerSocket server = null;
@@ -20,31 +16,72 @@ public class Server {
 
     public Server() {
         clients = new Vector<>();
+        authService = new SimpleAuthService();
 
         try {
             server = new ServerSocket(PORT);
             System.out.println("Сервер запущен");
 
-            while (true){
+            while (true) {
                 socket = server.accept();
                 System.out.println("Клиент подключился");
-                clients.add(new ClientHandler(this, socket));
+
+//                clients.add(new ClientHandler(this, socket));
+//                subscribe(new ClientHandler(this, socket));
+                new ClientHandler(this, socket);
             }
 
         } catch (IOException e) {
             e.printStackTrace();
-        }finally {
+        } finally {
             try {
                 server.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
         }
     }
-    public void  broadcastMsg(String msg){
-        for (ClientHandler client : clients){
-            client.sendMessage(msg);
+
+    public void broadcastMsg(ClientHandler sender, String msg) {
+        String message = String.format("%s : %s", sender.getNickName(), msg);
+        for (ClientHandler client : clients) {
+            client.sendMsg(message);
         }
+    }
+
+    public boolean sendPrivateMsg(ClientHandler from, String nickname, String msg) {
+        ClientHandler to = getClientByNickname(nickname);
+        if (to == null) {
+            return false;
+        }
+
+        String message = String.format("[ %s --> %s ] : %s", from.getNickName(), to.getNickName(), msg);
+        from.sendMsg(message);
+        to.sendMsg(message);
+
+        return true;
+    }
+
+    private ClientHandler getClientByNickname(String nickname) {
+        for (ClientHandler client : clients) {
+            if (client.getNickName().equals(nickname)) {
+                return client;
+            }
+        }
+
+        return null;
+    }
+
+
+    public void subscribe(ClientHandler clientHandler) {
+        clients.add(clientHandler);
+    }
+
+    public void unsubscribe(ClientHandler clientHandler) {
+        clients.remove(clientHandler);
+    }
+
+    public AuthService getAuthService(){
+        return authService;
     }
 }
